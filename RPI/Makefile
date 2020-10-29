@@ -67,6 +67,9 @@ ov9281_external_trigger : ov9281_external_trigger.c
 yuv_callback: yuv_callback.c
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $^ $(LIBS)
 
+pipebots_stream: pipebots_stream.c
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $^ $(LIBS)
+
 clean:
 	-rm -f *.o
 	-rm -f $(examples)
