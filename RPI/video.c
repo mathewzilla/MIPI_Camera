@@ -104,7 +104,15 @@ int main(int argc, char **argv) {
     arducam_software_auto_white_balance(camera_instance, 1);
 #endif
 
-    fd = fopen("test.h264", "wb");
+    // add datestring to filename
+    time_t t = time(0);   // get time now
+    struct tm * now = localtime( & t );
+    char buffer [80];
+    strftime (buffer,80,"%Y-%m-%d-%H-%M-%S",now);
+    strcat(buffer, ".h264");
+
+
+    fd = fopen(buffer, "wb");
     VIDEO_ENCODER_STATE video_state;
     default_status(&video_state);
     // start video callback

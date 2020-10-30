@@ -22,3 +22,4 @@ RPI/video2stdout
 RPI/video4cameras
 RPI/yuv_callback
 RPI/pipebots_stream
+RPI/pipeGui

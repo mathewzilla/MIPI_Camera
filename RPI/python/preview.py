@@ -40,7 +40,7 @@ if __name__ == "__main__":
         fmt = camera.set_resolution(1920, 1080)
         print("Current resolution is {}".format(fmt))
         print("Start preview...")
-        camera.start_preview(fullscreen = False, window = (0, 0, 1280, 720))
+        camera.start_preview(fullscreen = True, window = (0, 0, 1280, 720))
         set_controls(camera)
         time.sleep(10)
         print("Setting the resolution...")

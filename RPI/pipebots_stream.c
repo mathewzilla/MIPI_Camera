@@ -1,4 +1,5 @@
 #include "arducam_mipicamera.h"
+#include <linux/v4l2-controls.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -9,6 +10,20 @@
 
 FILE *fd;
 int frame_count = 0;
+
+typedef struct{
+int frameCnt;
+int exposureVal;
+int  key;
+int trigger;    // external trigger
+}GLOBAL_VAL;
+typedef struct {
+    CAMERA_INSTANCE camera_instance;
+}PROCESS_STRUCT;
+time_t begin = 0;
+
+GLOBAL_VAL globalParam; 
+
 int video_callback(BUFFER *buffer) {
     if (TIME_UNKNOWN == buffer->pts) {
         // Frame data in the second half
@@ -62,6 +77,28 @@ static void default_status(VIDEO_ENCODER_STATE *state) {
     
 }
 
+
+// Set globalParam for printing
+int resetGlobalParameter(CAMERA_INSTANCE camera_instance, GLOBAL_VAL* globalParam){
+    arducam_get_control(camera_instance, V4L2_CID_EXPOSURE, &globalParam->exposureVal);
+    globalParam -> frameCnt = 0;
+    globalParam -> key = 0;
+    
+}
+
+// Printing camera parameters to command line 
+int raw_callback(BUFFER *buffer) {
+       globalParam.frameCnt++;
+         if(time(NULL) - begin >= 1){
+             printf("\r[Framerate]: %02d pfs, [Exposure]: %04d", 
+                    globalParam.frameCnt,globalParam.exposureVal);
+             fflush(stdout); 
+            globalParam.frameCnt = 0;
+            begin = time(NULL);
+         }
+    return 0;
+}
+
 int main(int argc, char **argv) {
     CAMERA_INSTANCE camera_instance;
     int count = 0;
@@ -105,6 +142,22 @@ int main(int argc, char **argv) {
     arducam_software_auto_white_balance(camera_instance, 1);
 #endif
 
+    resetGlobalParameter(camera_instance, &globalParam);
+    if (arducam_set_control(camera_instance, V4L2_CID_EXPOSURE,globalParam.exposureVal)) {
+        LOG("Failed to set exposure, the camera may not support this control.");
+    }
+
+    res = arducam_set_raw_callback(camera_instance, raw_callback, NULL);
+    if (res) {
+        LOG("Failed to start raw data callback.");
+        return -1;
+    }
+
+// callback code in isolation 
+    LOG("\r[Framerate]: %02d pfs, [Exposure]: %04d", 
+        globalParam.frameCnt,globalParam.exposureVal);
+
+
     // fd = fopen("test.h264", "wb");
     fd = stdout;
     VIDEO_ENCODER_STATE video_state;
@@ -117,6 +170,8 @@ int main(int argc, char **argv) {
         LOG("Failed to start video encoding, probably due to resolution greater than 1920x1080 or video_state setting error.");
         return -1;
     }
+
+
 
     while(1)
         usleep(1000 * 300);
